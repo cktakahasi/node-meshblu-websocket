@@ -20,5 +20,14 @@
   "bugs": {
     "url": "https://github.com/octoblu/meshblu-websocket/issues"
   },
-  "homepage": "https://github.com/octoblu/meshblu-websocket"
+  "homepage": "https://github.com/octoblu/meshblu-websocket",
+  "devDependencies": {
+    "chai": "^2.3.0",
+    "mocha": "^2.2.5",
+    "sinon": "^1.14.1",
+    "sinon-chai": "^2.7.0"
+  },
+  "dependencies": {
+    "coffee-script": "^1.9.3"
+  }
 }
