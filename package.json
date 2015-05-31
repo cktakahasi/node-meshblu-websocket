@@ -28,6 +28,8 @@
     "sinon-chai": "^2.7.0"
   },
   "dependencies": {
-    "coffee-script": "^1.9.3"
+    "coffee-script": "^1.9.3",
+    "lodash": "^3.9.3",
+    "ws": "^0.7.2"
   }
 }
