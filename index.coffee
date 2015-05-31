@@ -1,1 +1,1 @@
-module.exports = require 'meshblu'
+module.exports = require './src/meshblu'
