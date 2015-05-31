@@ -1,0 +1,24 @@
+{
+  "name": "meshblu-websocket",
+  "version": "1.0.0",
+  "description": "Pure websocket implementation of the Meshblu client",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/octoblu/meshblu-websocket.git"
+  },
+  "keywords": [
+    "Meshblu",
+    "Octoblu",
+    "websockets"
+  ],
+  "author": "Octoblu Inc.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/octoblu/meshblu-websocket/issues"
+  },
+  "homepage": "https://github.com/octoblu/meshblu-websocket"
+}
