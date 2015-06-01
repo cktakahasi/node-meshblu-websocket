@@ -13,7 +13,7 @@ class Meshblu extends EventEmitter2
   connect: (callback=->) =>
     @ws = new @WebSocket @_buildUri()
     @ws.once 'open', =>
-      @send 'identity', _.pick(@options, 'uuid', 'token')
+      @identity _.pick(@options, 'uuid', 'token')
 
     readyHandler = (event) =>
       [type, data] = JSON.parse event
@@ -32,8 +32,20 @@ class Meshblu extends EventEmitter2
     debug 'send', [type, data]
     @ws.send JSON.stringify [type, data]
 
-  whoami: (callback=->) =>
-    @send 'whoami'
+  # API Functions
+  device:      (params) => @send 'device', params
+  devices:     (params) => @send 'devices', params
+  identity:    (params) => @send 'identity', params
+  message:     (params) => @send 'message', params
+  mydevices:   (params) => @send 'mydevices', params
+  register:    (params) => @send 'register', params
+  subscribe:   (params) => @send 'subscribe', params
+  unsubscribe: (params) => @send 'unsubscribe', params
+  update:      (params) => @send 'update', params
+  whoami:               => @send 'whoami'
+  unregister:  (params) => @send 'unregister', params
+
+  # Private Functions
 
   _buildUri: =>
     uriOptions = _.defaults @options, {
