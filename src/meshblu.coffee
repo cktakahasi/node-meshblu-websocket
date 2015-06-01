@@ -56,8 +56,11 @@ class Meshblu extends EventEmitter2
     url.format uriOptions
 
   _messageHandler: (message) =>
+    debug '_messageHandler', message
     [type, data] = JSON.parse message
-    @emit type, data
+    return @emit type, data unless type == 'error'
+    return @emit 'error', new Error(data.message) if data.message
+    @emit 'error', new Error("unknown error occured, here's what I know: #{JSON.stringify(data)}")
 
   _proxy: (event) =>
     @ws.on event, =>
