@@ -33,17 +33,43 @@ class Meshblu extends EventEmitter2
     @ws.send JSON.stringify [type, data]
 
   # API Functions
-  device:      (params) => @send 'device', params
-  devices:     (params) => @send 'devices', params
-  identity:    (params) => @send 'identity', params
-  message:     (params) => @send 'message', params
-  mydevices:   (params) => @send 'mydevices', params
-  register:    (params) => @send 'register', params
-  subscribe:   (params) => @send 'subscribe', params
-  unsubscribe: (params) => @send 'unsubscribe', params
-  update:      (params) => @send 'update', params
-  whoami:               => @send 'whoami'
-  unregister:  (params) => @send 'unregister', params
+  device:      (params) =>
+    params = @_uuidOrObject params
+    @send 'device', params
+
+  devices:     (params) =>
+    @send 'devices', params
+
+  identity:    (params) =>
+    @send 'identity', params
+
+  message:     (params) =>
+    @send 'message', params
+
+  mydevices:   (params) =>
+    @send 'mydevices', params
+
+  register:    (params) =>
+    @send 'register', params
+
+  subscribe:   (params) =>
+    params = @_uuidOrObject params
+    @send 'subscribe', params
+
+  unsubscribe: (params) =>
+    params = @_uuidOrObject params
+    @send 'unsubscribe', params
+
+  update:      (params) =>
+    @send 'update', params
+
+  whoami:               =>
+    @send 'whoami'
+
+  unregister:  (params) =>
+    params = @_uuidOrObject params
+    @send 'unregister', params
+
 
   # Private Functions
 
@@ -66,6 +92,10 @@ class Meshblu extends EventEmitter2
     @ws.on event, =>
       debug event, _.first arguments
       @emit event, arguments...
+
+  _uuidOrObject: (data) =>
+    return uuid: data if _.isString data
+    return data
 
 
 module.exports = Meshblu
