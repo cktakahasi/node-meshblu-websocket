@@ -18,9 +18,13 @@ class Meshblu extends EventEmitter2
     readyHandler = (event) =>
       [type, data] = JSON.parse event
       debug 'readyHandler', [type, data]
-      error = new Error(data.error.message) if data.error
+      if type == 'notReady'
+        error = new Error data.message
+        error.status = data.status
+        error.frame = data.frame
+        return callback error
       @ws.removeListener 'message', readyHandler
-      callback error
+      callback()
 
     @ws.once 'message', readyHandler
     @ws.on 'message', @_messageHandler
@@ -87,7 +91,11 @@ class Meshblu extends EventEmitter2
     debug '_messageHandler', message
     [type, data] = JSON.parse message
     return @emit type, data unless type == 'error'
-    return @emit 'error', new Error(data.message) if data.message
+    if data.message?
+      error = new Error data.message
+      error.frame = data.frame
+      error.status = data.status
+      return @emit 'error', error
     @emit 'error', new Error("unknown error occured, here's what I know: #{JSON.stringify(data)}")
 
   _proxy: (event) =>
