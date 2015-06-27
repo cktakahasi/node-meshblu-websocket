@@ -78,17 +78,10 @@ class Meshblu extends EventEmitter2
 
   update: (query, params) =>
     @send 'update', [query, {$set: params}]
-<<<<<<< HEAD
 
   updateDangerously: (query, params) =>
     @send 'update', [query, params]
 
-=======
-
-  updateDangerously: (query, params) =>
-    @send 'update', [query, params]
-
->>>>>>> e41f9a9324cf75185ca35a085ef300d587595ce4
   whoami: =>
     @send 'whoami'
 
