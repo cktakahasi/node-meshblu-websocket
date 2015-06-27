@@ -42,12 +42,11 @@ describe 'Meshblu', ->
 
       describe 'when the WebSocket emits notready', ->
         beforeEach ->
-          @ws.emit 'message', '["notready",{"error":{"message":"Unauthorized"}}]'
+          @ws.emit 'message', '["notReady",{"message":"Unauthorized"}]'
 
         it 'should call the callback with the error', ->
-          expect(@callback).to.have.been.calledWith new Error('Unauthorized')
-
-
+          expect(@callback.firstCall.args[0]).to.be.an.instanceOf Error
+          expect(@callback.firstCall.args[0].message).to.deep.equal 'Unauthorized'
 
 class WebSocket extends EventEmitter
   constructor: ->

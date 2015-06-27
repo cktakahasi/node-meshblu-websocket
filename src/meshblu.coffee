@@ -1,3 +1,4 @@
+_               = require 'lodash'
 url             = require 'url'
 {EventEmitter2} = require 'eventemitter2'
 _               = require 'lodash'
@@ -20,9 +21,13 @@ class Meshblu extends EventEmitter2
     readyHandler = (event) =>
       [type, data] = JSON.parse event
       debug 'readyHandler', [type, data]
-      error = new Error(data.error.message) if data.error
+      if type == 'notReady'
+        error = new Error data.message
+        error.status = data.status
+        error.frame = data.frame
+        return callback error
       @ws.removeListener 'message', readyHandler
-      callback error
+      callback()
 
     @ws.once 'message', readyHandler
     @ws.on 'message', @_messageHandler
@@ -44,26 +49,26 @@ class Meshblu extends EventEmitter2
     @ws.send JSON.stringify [type, data]
 
   # API Functions
-  device:      (params) =>
+  device: (params) =>
     params = @_uuidOrObject params
     @send 'device', params
 
-  devices:     (params) =>
+  devices: (params) =>
     @send 'devices', params
 
-  identity:    (params) =>
+  identity: (params) =>
     @send 'identity', params
 
-  message:     (params) =>
+  message: (params) =>
     @send 'message', params
 
-  mydevices:   (params) =>
+  mydevices: (params) =>
     @send 'mydevices', params
 
-  register:    (params) =>
+  register: (params) =>
     @send 'register', params
 
-  subscribe:   (params) =>
+  subscribe: (params) =>
     params = @_uuidOrObject params
     @send 'subscribe', params
 
@@ -71,16 +76,18 @@ class Meshblu extends EventEmitter2
     params = @_uuidOrObject params
     @send 'unsubscribe', params
 
-  update:      (params) =>
-    @send 'update', params
+  update: (query, params) =>
+    @send 'update', [query, {$set: params}]
 
-  whoami:               =>
+  updateDangerously: (query, params) =>
+    @send 'update', [query, params]
+
+  whoami: =>
     @send 'whoami'
 
-  unregister:  (params) =>
+  unregister: (params) =>
     params = @_uuidOrObject params
     @send 'unregister', params
-
 
   # Private Functions
 
@@ -96,7 +103,11 @@ class Meshblu extends EventEmitter2
     debug '_messageHandler', message
     [type, data] = JSON.parse message
     return @emit type, data unless type == 'error'
-    return @emit 'error', new Error(data.message) if data.message
+    if data.message?
+      error = new Error data.message
+      error.frame = data.frame
+      error.status = data.status
+      return @emit 'error', error
     @emit 'error', new Error("unknown error occured, here's what I know: #{JSON.stringify(data)}")
 
   _proxy: (event) =>
@@ -107,6 +118,5 @@ class Meshblu extends EventEmitter2
   _uuidOrObject: (data) =>
     return uuid: data if _.isString data
     return data
-
 
 module.exports = Meshblu
