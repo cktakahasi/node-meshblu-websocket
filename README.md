@@ -1,6 +1,17 @@
 # meshblu-websocket
 Pure websocket implementation of the Meshblu client
 
+[![Build Status](https://travis-ci.org/octoblu/node-meshblu-websocket.svg?branch=master)](https://travis-ci.org/octoblu/node-meshblu-websocket)
+[![npm version](https://badge.fury.io/js/meshblu-websocket.svg)](http://badge.fury.io/js/meshblu-websocket)
+[![Gitter](https://badges.gitter.im/octoblu/help.svg)](https://gitter.im/octoblu/help)
+
+### Install
+
+```shell
+npm install meshblu-websocket
+```
+
+
 ### Example
 
 ```js
