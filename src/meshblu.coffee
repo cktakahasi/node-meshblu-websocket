@@ -5,12 +5,14 @@ _               = require 'lodash'
 debug           = require('debug')('meshblu-websocket')
 
 PROXY_EVENTS = ['close', 'error', 'unexpected-response', 'ping', 'pong', 'open']
+FIVE_MINUTES = 5 * 60 * 1000
 
 class Meshblu extends EventEmitter2
   constructor: (@options={}, dependencies={})->
     super wildcard: true
     @WebSocket = dependencies.WebSocket ? require 'ws'
     @options.pingInterval ?= 15000
+    @options.pingTimeout  ?= FIVE_MINUTES
 
   connect: (callback=->) =>
     @ws = new @WebSocket @_buildUri()
@@ -31,8 +33,14 @@ class Meshblu extends EventEmitter2
 
     @ws.once 'message', readyHandler
     @ws.on 'message', @_messageHandler
+    @ws.on 'pong', @_handlePong
 
     _.each PROXY_EVENTS, (event) => @_proxy event
+
+  reconnect: =>
+    debug 'reconnect'
+    @ws.close()
+    @connect()
 
   startPollPinging: =>
     return if @_alreadyPollPinging
@@ -41,7 +49,14 @@ class Meshblu extends EventEmitter2
 
   ping: =>
     debug 'ping'
-    @ws?.ping()
+    try
+      @ws?.ping()
+    catch error
+      return @reconnect()
+
+    elapsedTime = Date.now() - @_lastPong
+    if elapsedTime > @options.pingTimeout
+      @reconnect()
 
   send: (type, data) =>
     throw new Error 'No Active Connection' unless @ws?
@@ -98,6 +113,9 @@ class Meshblu extends EventEmitter2
     }
 
     url.format uriOptions
+
+  _handlePong: =>
+    @_lastPong = Date.now()
 
   _messageHandler: (message) =>
     debug '_messageHandler', message
