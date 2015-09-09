@@ -40,6 +40,7 @@ class Meshblu extends EventEmitter2
   reconnect: =>
     debug 'reconnect'
     @ws.close()
+    @ws.removeAllListeners('ready')
     @connect()
 
   startPollPinging: =>
@@ -52,11 +53,11 @@ class Meshblu extends EventEmitter2
     try
       @ws?.ping()
     catch error
-      return @reconnect()
+      return @emit 'error', error
 
     elapsedTime = Date.now() - @_lastPong
     if elapsedTime > @options.pingTimeout
-      @reconnect()
+      @emit 'error', new Error('Ping Timeout')
 
   send: (type, data) =>
     throw new Error 'No Active Connection' unless @ws?
