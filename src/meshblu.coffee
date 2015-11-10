@@ -92,6 +92,9 @@ class Meshblu extends EventEmitter2
     params = @_uuidOrObject params
     @send 'subscribe', params
 
+  subscribelist: =>
+    @send 'subscribelist'
+
   unsubscribe: (params) =>
     params = @_uuidOrObject params
     @send 'unsubscribe', params
