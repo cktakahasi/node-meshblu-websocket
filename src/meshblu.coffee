@@ -14,6 +14,10 @@ class Meshblu extends EventEmitter2
     @options.pingInterval ?= 15000
     @options.pingTimeout  ?= FIVE_MINUTES
 
+  close: =>
+    clearInterval @_pollPingInterval
+    @ws?.close()
+
   connect: (callback=->) =>
     @ws = new @WebSocket @_buildUri()
     @ws.once 'open', =>
@@ -46,7 +50,7 @@ class Meshblu extends EventEmitter2
   startPollPinging: =>
     return if @_alreadyPollPinging
     @_alreadyPollPinging = true
-    setInterval @ping, @options.pingInterval
+    @_pollPingInterval = setInterval @ping, @options.pingInterval
 
   ping: =>
     debug 'ping'

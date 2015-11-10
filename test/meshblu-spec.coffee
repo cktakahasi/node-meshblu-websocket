@@ -6,6 +6,28 @@ describe 'Meshblu', ->
     @ws = new WebSocket
     @WebSocket = sinon.stub().returns @ws
 
+  describe '->close', ->
+    describe 'with a connected client', ->
+      beforeEach (done) ->
+        @sut = new Meshblu {}, WebSocket: @WebSocket
+        @sut.connect done
+        @ws.emit 'message', '["ready"]'
+
+      describe 'when called', ->
+        beforeEach ->
+          @sut.close()
+
+        it 'should call close on the @ws', ->
+          expect(@ws.close).to.have.been.called
+
+    describe 'with a disconnected client', ->
+      beforeEach ->
+        @sut = new Meshblu {}, WebSocket: @WebSocket
+
+      describe 'when called', ->
+        it 'should not throw an error', ->
+          expect(@sut.close).not.to.throw
+
   describe '->connect', ->
     describe 'when instantiated with node url params', ->
       beforeEach ->
@@ -19,6 +41,9 @@ describe 'Meshblu', ->
 
         @sut = new Meshblu config, WebSocket: @WebSocket
         @sut.connect @callback
+
+      afterEach ->
+        @sut.close()
 
       it 'should instantiate a new ws', ->
         expect(@WebSocket).to.have.been.calledWithNew
@@ -50,6 +75,8 @@ describe 'Meshblu', ->
 
 class WebSocket extends EventEmitter
   constructor: ->
-    sinon.spy this, 'send'
+    sinon.stub this, 'send'
+    sinon.stub this, 'close'
 
   send: =>
+  close: =>
