@@ -1,6 +1,6 @@
 {
   "name": "meshblu-websocket",
-  "version": "2.3.6",
+  "version": "2.3.7",
   "description": "Pure websocket implementation of the Meshblu client",
   "main": "index.js",
   "scripts": {
