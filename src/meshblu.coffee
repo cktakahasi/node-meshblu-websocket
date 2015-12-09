@@ -116,9 +116,12 @@ class Meshblu extends EventEmitter2
 
   _buildUri: =>
     uriOptions = _.defaults @options, {
-      protocol: 'wss'
+      protocol: 'ws'
       pathname: '/ws/v2'
     }
+
+    if @options.port == 443
+      uriOptions = 'wss'
 
     url.format uriOptions
 
