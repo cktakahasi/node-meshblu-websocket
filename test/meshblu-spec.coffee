@@ -49,7 +49,7 @@ describe 'Meshblu', ->
         expect(@WebSocket).to.have.been.calledWithNew
 
       it 'should have been called with a formated url', ->
-        expect(@WebSocket).to.have.been.calledWith 'wss:localhost:1234/ws/v2'
+        expect(@WebSocket).to.have.been.calledWith 'ws:localhost:1234/ws/v2'
 
       describe 'when the WebSocket emits open', ->
         beforeEach ->
