@@ -27,7 +27,7 @@ class Meshblu extends EventEmitter2
     readyHandler = (event) =>
       [type, data] = JSON.parse event
       debug 'readyHandler', [type, data]
-      if type == 'notReady'
+      if type == 'notReady' || type == 'error'
         error = new Error data.message
         error.status = data.status
         error.frame = data.frame
