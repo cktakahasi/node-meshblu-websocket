@@ -8,38 +8,45 @@ PROXY_EVENTS = ['close', 'error', 'unexpected-response', 'ping', 'pong', 'open']
 FIVE_MINUTES = 5 * 60 * 1000
 
 class Meshblu extends EventEmitter2
-  constructor: (@options={}, dependencies={})->
+  constructor: (options={}, dependencies={})->
     super wildcard: true
     @WebSocket = dependencies.WebSocket ? require 'ws'
-    @options.pingInterval ?= 15000
-    @options.pingTimeout  ?= FIVE_MINUTES
+    @dns       = dependencies.dns ? require 'dns'
+    @pingInterval ?= 15000
+    @pingTimeout  ?= FIVE_MINUTES
+
+    {@protocol, @hostname, @port} = options
+    {@service, @domain, @secure, @resolveSrv} = options
+    @credentials = _.pick options, 'uuid', 'token'
 
   close: =>
     clearInterval @_pollPingInterval
     @ws?.close()
 
   connect: (callback=->) =>
-    @ws = new @WebSocket @_buildUri()
-    @ws.once 'open', =>
-      @identity _.pick(@options, 'uuid', 'token')
-    @startPollPinging()
+    @_resolveBaseUrl (error, baseUrl) =>
+      return callback error if error?
 
-    readyHandler = (event) =>
-      [type, data] = JSON.parse event
-      debug 'readyHandler', [type, data]
-      if type == 'notReady' || type == 'error'
-        error = new Error data.message
-        error.status = data.status
-        error.frame = data.frame
-        return callback error
-      @ws.removeListener 'message', readyHandler
-      callback()
+      @ws = new @WebSocket baseUrl
+      @ws.once 'open', => @identity @credentials
+      @startPollPinging()
 
-    @ws.once 'message', readyHandler
-    @ws.on 'message', @_messageHandler
-    @ws.on 'pong', @_handlePong
+      readyHandler = (event) =>
+        [type, data] = JSON.parse event
+        debug 'readyHandler', [type, data]
+        if type == 'notReady' || type == 'error'
+          error = new Error data.message
+          error.status = data.status
+          error.frame = data.frame
+          return callback error
+        @ws.removeListener 'message', readyHandler
+        callback()
 
-    _.each PROXY_EVENTS, (event) => @_proxy event
+      @ws.once 'message', readyHandler
+      @ws.on 'message', @_messageHandler
+      @ws.on 'pong', @_handlePong
+
+      _.each PROXY_EVENTS, (event) => @_proxy event
 
   reconnect: =>
     debug 'reconnect'
@@ -50,7 +57,7 @@ class Meshblu extends EventEmitter2
   startPollPinging: =>
     return if @_alreadyPollPinging
     @_alreadyPollPinging = true
-    @_pollPingInterval = setInterval @ping, @options.pingInterval
+    @_pollPingInterval = setInterval @ping, @pingInterval
 
   ping: =>
     debug 'ping'
@@ -60,7 +67,7 @@ class Meshblu extends EventEmitter2
       return @emit 'error', error
 
     elapsedTime = Date.now() - @_lastPong
-    if elapsedTime > @options.pingTimeout
+    if elapsedTime > @pingTimeout
       @emit 'error', new Error('Ping Timeout')
 
   send: (type, data) =>
@@ -126,6 +133,13 @@ class Meshblu extends EventEmitter2
 
     url.format uriOptions
 
+  _getSrvAddress: =>
+    return "_#{@service}._#{@_getSrvProtocol()}.#{@domain}"
+
+  _getSrvProtocol: =>
+    return 'wss' if @secure
+    return 'ws'
+
   _handlePong: =>
     @_lastPong = Date.now()
 
@@ -144,6 +158,31 @@ class Meshblu extends EventEmitter2
     @ws.on event, =>
       debug event, _.first arguments
       @emit event, arguments...
+
+  _resolveBaseUrl: (callback) =>
+    return callback null, @_resolveNormalUrl() unless @resolveSrv
+
+    @dns.resolveSrv @_getSrvAddress(), (error, addresses) =>
+      return callback error if error?
+      return callback new Error('SRV record found, but contained no valid addresses') if _.isEmpty addresses
+      return callback null, @_resolveUrlFromAddresses(addresses)
+
+  _resolveNormalUrl: =>
+    pathname = '/ws/v2'
+    protocol = @protocol ? 'ws'
+    protocol = 'ws' if @protocol == 'http'
+    protocol = 'wss' if @port == 443 || @protocol == 'https'
+
+    url.format {protocol, @hostname, @port, pathname}
+
+  _resolveUrlFromAddresses: (addresses) =>
+    address = _.minBy addresses, 'priority'
+    return url.format {
+      protocol: @_getSrvProtocol()
+      hostname: address.name
+      port: address.port
+      pathname: '/ws/v2'
+    }
 
   _uuidOrObject: (data) =>
     return uuid: data if _.isString data

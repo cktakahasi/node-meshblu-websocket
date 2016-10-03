@@ -1,10 +1,85 @@
+{afterEach, beforeEach, describe, it} = global
+{expect} = require 'chai'
 {EventEmitter} = require 'events'
+sinon          = require 'sinon'
 Meshblu        = require '../src/meshblu'
 
 describe 'Meshblu', ->
   beforeEach ->
     @ws = new WebSocket
     @WebSocket = sinon.stub().returns @ws
+
+  describe 'SRV resolve', ->
+    describe 'when constructed with resolveSrv and secure true', ->
+      beforeEach ->
+        @dns = resolveSrv: sinon.stub()
+        @websocket = new EventEmitter
+        @WebSocket = sinon.spy => @websocket
+
+        options = resolveSrv: true, service: 'meshblu', domain: 'octoblu.com', secure: true
+        dependencies = {@dns, @WebSocket}
+
+        @sut = new Meshblu options, dependencies
+
+      describe 'when connect is called', ->
+        beforeEach 'making the request', (done) ->
+          @dns.resolveSrv.withArgs('_meshblu._wss.octoblu.com').yields null, [{
+            name: 'mesh.biz'
+            port: 34
+            priority: 1
+            weight: 100
+          }]
+          @sut.connect done
+          @websocket.emit 'message', '["ready"]'
+
+        it 'should instantiate the WebSocket with the resolved url', ->
+          expect(@WebSocket).to.have.been.calledWithNew
+          expect(@WebSocket).to.have.been.calledWith 'wss:mesh.biz:34/ws/v2'
+
+    describe 'when constructed with resolveSrv and secure false', ->
+      beforeEach ->
+        @dns = resolveSrv: sinon.stub()
+        @websocket = new EventEmitter
+        @WebSocket = sinon.spy => @websocket
+
+        options = resolveSrv: true, service: 'meshblu', domain: 'octoblu.com', secure: false
+        dependencies = {@dns, @WebSocket}
+
+        @sut = new Meshblu options, dependencies
+
+      describe 'when connect is called', ->
+        beforeEach 'making the request', (done) ->
+          @dns.resolveSrv.withArgs('_meshblu._ws.octoblu.com').yields null, [{
+            name: 'insecure.xxx'
+            port: 80
+            priority: 1
+            weight: 100
+          }]
+          @sut.connect done
+          @websocket.emit 'message', '["ready"]'
+
+        it 'should instantiate the WebSocket with the resolved url', ->
+          expect(@WebSocket).to.have.been.calledWithNew
+          expect(@WebSocket).to.have.been.calledWith 'ws:insecure.xxx:80/ws/v2'
+
+    describe 'when constructed without resolveSrv', ->
+      beforeEach ->
+        @websocket = new EventEmitter
+        @WebSocket = sinon.spy => @websocket
+
+        options = resolveSrv: false, protocol: 'https', hostname: 'thug.biz', port: 123
+        dependencies = {@request, @WebSocket}
+
+        @sut = new Meshblu options, dependencies
+
+      describe 'when connect is called', ->
+        beforeEach 'making the request', (done) ->
+          @sut.connect done
+          @websocket.emit 'message', '["ready"]'
+
+        it 'should instantiate the WebSocket with the resolved url', ->
+          expect(@WebSocket).to.have.been.calledWithNew
+          expect(@WebSocket).to.have.been.calledWith 'wss:thug.biz:123/ws/v2'
 
   describe '->close', ->
     describe 'with a connected client', ->
