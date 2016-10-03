@@ -10,6 +10,38 @@ describe 'Meshblu', ->
     @WebSocket = sinon.stub().returns @ws
 
   describe 'SRV resolve', ->
+    describe 'when constructed with resolveSrv true, and a hostname', ->
+      it 'should throw an error', ->
+        expect(=> new Meshblu resolveSrv: true, hostname: 'foo.co').to.throw(
+          'hostname parameter is only valid when the parameter resolveSrv is false'
+        )
+
+    describe 'when constructed with resolveSrv true, and nothing else', ->
+      beforeEach ->
+        @dns = resolveSrv: sinon.stub()
+        @websocket = new EventEmitter
+        @WebSocket = sinon.spy => @websocket
+
+        options = resolveSrv: true
+        dependencies = {@dns, @WebSocket}
+
+        @sut = new Meshblu options, dependencies
+
+      describe 'when connect is called', ->
+        beforeEach 'making the request', (done) ->
+          @dns.resolveSrv.withArgs('_meshblu._wss.octoblu.com').yields null, [{
+            name: 'mesh.biz'
+            port: 34
+            priority: 1
+            weight: 100
+          }]
+          @sut.connect done
+          @websocket.emit 'message', '["ready"]'
+
+        it 'should instantiate the WebSocket with the resolved url', ->
+          expect(@WebSocket).to.have.been.calledWithNew
+          expect(@WebSocket).to.have.been.calledWith 'wss:mesh.biz:34/ws/v2'
+
     describe 'when constructed with resolveSrv and secure true', ->
       beforeEach ->
         @dns = resolveSrv: sinon.stub()

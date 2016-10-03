@@ -17,6 +17,15 @@ class Meshblu extends EventEmitter2
 
     {@protocol, @hostname, @port} = options
     {@service, @domain, @secure, @resolveSrv} = options
+
+    if @resolveSrv
+      @_assertNoUrl({@protocol, @hostname, @port})
+    else
+      @_assertNoSrv({@service, @domain, @secure})
+
+    @service ?= 'meshblu'
+    @domain  ?= 'octoblu.com'
+    @secure  ?= true
     @credentials = _.pick options, 'uuid', 'token'
 
   close: =>
@@ -120,6 +129,15 @@ class Meshblu extends EventEmitter2
     @send 'unregister', params
 
   # Private Functions
+  _assertNoSrv: ({service, domain, secure}) =>
+    throw new Error('domain parameter is only valid when the parameter resolveSrv is true')  if domain?
+    throw new Error('service parameter is only valid when the parameter resolveSrv is true') if service?
+    throw new Error('secure parameter is only valid when the parameter resolveSrv is true')  if secure?
+
+  _assertNoUrl: ({protocol, hostname, port}) =>
+    throw new Error('protocol parameter is only valid when the parameter resolveSrv is false') if protocol?
+    throw new Error('hostname parameter is only valid when the parameter resolveSrv is false') if hostname?
+    throw new Error('port parameter is only valid when the parameter resolveSrv is false')     if port?
 
   _buildUri: =>
     uriOptions = _.defaults @options, {
